@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Vocabulary Quiz App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f3f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .app-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { color: #2c3e50; font-size: 24px; margin-bottom: 5px; }
+        .subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }
+        .selector-box {
+            margin-bottom: 25px;
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .selector-box label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #34495e;
+            margin-right: 10px;
+        }
+        select {
+            padding: 6px 12px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #bdc3c7;
+            outline: none;
+            cursor: pointer;
+        }
+        .word-card {
+            font-size: 38px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            min-height: 50px;
+        }
+        input[type="text"] {
+            width: 85%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            outline: none;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        input[type="text"]:focus { border-color: #3498db; }
+        button.main-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button.main-btn:hover { background-color: #2980b9; }
+        .feedback {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            min-height: 25px;
+        }
+        .correct { color: #2ecc71; }
+        .incorrect { color: #e74c3c; }
+        .progress { font-size: 13px; color: #7f8c8d; margin-top: 15px; font-weight: bold; }
+        .improvement-box {
+            text-align: left;
+            background: #fff5f5;
+            padding: 15px;
+            border-left: 5px solid #e74c3c;
+            border-radius: 6px;
+            margin-top: 25px;
+            display: none;
+        }
+        .improvement-box h3 { color: #c0392b; margin-top: 0; font-size: 18px; }
+        .improvement-box ul { padding-left: 20px; margin-bottom: 0; }
+        .improvement-box li { margin-bottom: 8px; color: #2c3e50; font-size: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>Japanese Quiz App</h1>
+    <p class="subtitle">Type the English meaning and press Enter or Submit</p>
+
+    <div class="selector-box">
+        <label for="lesson-select">Choose Lesson:</label>
+        <select id="lesson-select" onchange="resetQuizState()">
+            <option value="all">All Lessons (Mixed)</option>
+            <option value="1">Lesson 1 Only</option>
+            <option value="2">Lesson 2 Only</option>
+            <option value="3">Lesson 3 Only</option>
+             <option value="4">Lesson 4 Only</option>
+            <option value="5">Lesson 5 Only</option>
+            <option value="6">Lesson 6 Only</option>
+            <option value="7">Lesson 7 Only</option>
+            <option value="8">Lesson 8 Only</option>
+            <option value="9">Lesson 9 Only</option>
+            <option value="10">Lesson 10 Only</option>
+        </select>
+    </div>
+
+    <div class="word-card" id="target-word">Loading...</div>
+    
+    <input type="text" id="input-ans" placeholder="Type answer here..." autocomplete="off">
+    <br>
+    <button class="main-btn" id="btn-submit" onclick="verifyInput()">Submit</button>
+
+    <div class="feedback" id="msg-feedback"></div>
+    <div class="progress" id="msg-progress"></div>
+
+    <div class="improvement-box" id="box-improve">
+        <h3>📝 Improvement List (Review words):</h3>
+        <ul id="list-wrong-words"></ul>
+        <button id="btn-reset" style="margin-top:15px; background:#2ecc71; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="resetQuizState()">Restart Quiz</button>
+    </div>
+</div>
+<script>
+    const vocabularyList = [
+        // --- LESSON 1 ---
+        { lesson: "1", jp: "わたし", en: ["i"] },
+        { lesson: "1", jp: "あなた", en: ["you"] },
+        { lesson: "1", jp: "あの ひと / あの かた", en: ["that person", "he", "she"] },
+        { lesson: "1", jp: "〜さん", en: ["mr.", "ms.", "mr", "ms"] },
+        { lesson: "1", jp: "〜ちゃん", en: ["suffix for child", "chan"] },
+        { lesson: "1", jp: "〜じん", en: ["nationality", "suffix meaning a national of"] },
+        { lesson: "1", jp: "せんせい (先生)", en: ["teacher", "instructor"] },
+        { lesson: "1", jp: "きょうし (教師)", en: ["teacher", "instructor"] },
+        { lesson: "1", jp: "がくせい (学生)", en: ["student"] },
+        { lesson: "1", jp: "かいしゃいん (会社員)", en: ["company employee"] },
+        { lesson: "1", jp: "しゃいん (社員)", en: ["employee"] },
+        { lesson: "1", jp: "ぎんこういん (銀行員)", en: ["bank employee"] },
+        { lesson: "1", jp: "いしゃ (医者)", en: ["doctor", "medical doctor"] },
+        { lesson: "1", jp: "けんきゅうしゃ (研究者)", en: ["researcher", "scholar"] },
+        { lesson: "1", jp: "だいがく (大学)", en: ["university"] },
+        { lesson: "1", jp: "びょういん (病院)", en: ["hospital"] },
+        { lesson: "1", jp: "だれ / どなた", en: ["who"] },
+        { lesson: "1", jp: "〜さい", en: ["years old"] },
+        { lesson: "1", jp: "なんさい / おいくつ", en: ["how old"] },
+        { lesson: "1", jp: "はい", en: ["yes"] },
+        { lesson: "1", jp: "いいえ", en: ["no"] },
+        { lesson: "1", jp: "はじめまして (初めまして)", en: ["how do you do?", "how do you do"] },
+        { lesson: "1", jp: "〜から 来ました", en: ["i'm from", "i am from"] },
+        { lesson: "1", jp: "どうぞ よろしく お願いします", en: ["pleased to meet you"] },
+        { lesson: "1", jp: "しつれいですが (失礼ですが)", en: ["excuse me, but", "excuse me"] },
+        { lesson: "1", jp: "お名前は？", en: ["may i have your name?", "what is your name?", "your name?"] },
+        { lesson: "1", jp: "こちらは 〜さんです", en: ["this is mr. ~", "this is ms. ~", "this is"] },
+        { lesson: "1", jp: "アメリカ", en: ["u.s.a.", "usa", "america"] },
+        { lesson: "1", jp: "イギリス", en: ["u.k.", "uk", "united kingdom"] },
+        { lesson: "1", jp: "インド", en: ["india"] },
+        { lesson: "1", jp: "インドネシア", en: ["indonesia"] },
+        { lesson: "1", jp: "かんこく (韓国)", en: ["south korea", "korea"] },
+        { lesson: "1", jp: "タイ", en: ["thailand"] },
+        { lesson: "1", jp: "ちゅうごく (中国)", en: ["china"] },
+        { lesson: "1", jp: "ドイツ", en: ["germany"] },
+        { lesson: "1", jp: "にほん (日本)", en: ["japan"] },
+        { lesson: "1", jp: "ブラジル", en: ["brazil"] },
+
+        // --- LESSON 2 ---
+        { lesson: "2", jp: "これ", en: ["this", "this thing here"] },
+        { lesson: "2", jp: "それ", en: ["that", "that thing near the listener"] },
+        { lesson: "2", jp: "あれ", en: ["that", "that thing over there"] },
+        { lesson: "2", jp: "この 〜", en: ["this"] },
+        { lesson: "2", jp: "その 〜", en: ["that"] },
+        { lesson: "2", jp: "あの 〜", en: ["that"] },
+        { lesson: "2", jp: "ほん (本)", en: ["book"] },
+        { lesson: "2", jp: "じしょ (辞書)", en: ["dictionary"] },
+        { lesson: "2", jp: "ざっし (雑誌)", en: ["magazine"] },
+        { lesson: "2", jp: "しんぶん (新聞)", en: ["newspaper"] },
+        { lesson: "2", jp: "ノート", en: ["notebook"] },
+        { lesson: "2", jp: "てちょう (手帳)", en: ["personal organiser", "pocket notebook", "diary"] },
+        { lesson: "2", jp: "めいし (名刺)", en: ["business card"] },
+        { lesson: "2", jp: "カード", en: ["card", "credit card"] },
+        { lesson: "2", jp: "えんぴつ (鉛筆)", en: ["pencil"] },
+        { lesson: "2", jp: "ボールペン", en: ["ballpoint pen"] },
+        { lesson: "2", jp: "シャープペンシル", en: ["mechanical pencil", "propelling pencil"] },
+        { lesson: "2", jp: "かぎ", en: ["key"] },
+        { lesson: "2", jp: "とけい (時計)", en: ["watch", "clock"] },
+        { lesson: "2", jp: "かさ (傘)", en: ["umbrella"] },
+        { lesson: "2", jp: "かばん", en: ["bag", "briefcase"] },
+        { lesson: "2", jp: "CD", en: ["cd", "compact disc"] },
+        { lesson: "2", jp: "テレビ", en: ["television", "tv"] },
+        { lesson: "2", jp: "ラジオ", en: ["radio"] },
+        { lesson: "2", jp: "カメラ", en: ["camera"] },
+        { lesson: "2", jp: "コンピューター", en: ["computer"] },
+        { lesson: "2", jp: "くるま (車)", en: ["car", "vehicle"] },
+        { lesson: "2", jp: "つくえ (机)", en: ["desk"] },
+        { lesson: "2", jp: "いす", en: ["chair"] },
+        { lesson: "2", jp: "チョコレート", en: ["chocolate"] },
+        { lesson: "2", jp: "コーヒー", en: ["coffee"] },
+        { lesson: "2", jp: "[お]みやげ ([お]土産)", en: ["souvenir", "present", "gift"] },
+        { lesson: "2", jp: "えいご (英語)", en: ["the english language", "english"] },
+        { lesson: "2", jp: "にほんご (日本語)", en: ["the japanese language", "japanese"] },
+        { lesson: "2", jp: "〜ご (〜語)", en: ["language"] },
+        { lesson: "2", jp: "なん (何)", en: ["what"] },
+        { lesson: "2", jp: "そう", en: ["so"] },
+        { lesson: "2", jp: "あのう", en: ["er...", "er", "umm"] },
+        { lesson: "2", jp: "えっ", en: ["oh?", "what!"] },
+        { lesson: "2", jp: "どうぞ。", en: ["here you are", "go ahead"] },
+        { lesson: "2", jp: "[どうも] ありがとう [ございます]。", en: ["thank you very much", "thank you"] },
+        { lesson: "2", jp: "そうですか。", en: ["i see", "is that so?"] },
+        { lesson: "2", jp: "ちがいます (違います)。", en: ["no, it isn't", "you are wrong", "it's wrong"] },
+        { lesson: "2", jp: "あ", en: ["oh!"] },
+        { lesson: "2", jp: "これから お世話になります。", en: ["thank you in advance for your kindness"] },
+        { lesson: "2", jp: "こちらこそ [どうぞ] よろしく [お願いします]。", en: ["pleased to meet you, too", "pleased to meet you too", "same here"] },
+
+         // --- LESSON 3 ---
+        { lesson: "3", jp: "ここ", en: ["here", "this place"] },
+        { lesson: "3", jp: "そこ", en: ["there", "that place near the listener"] },
+        { lesson: "3", jp: "あそこ", en: ["that place over there", "that place"] },
+        { lesson: "3", jp: "どこ", en: ["where", "what place"] },
+        { lesson: "3", jp: "こちら", en: ["this way", "this place"] },
+        { lesson: "3", jp: "そちら", en: ["that way", "that place near the listener"] },
+        { lesson: "3", jp: "あちら", en: ["that way", "that place over there"] },
+        { lesson: "3", jp: "どちら", en: ["which way", "where"] },
+        { lesson: "3", jp: "きょうしつ (教室)", en: ["classroom"] },
+        { lesson: "3", jp: "しょくどう (食堂)", en: ["dining hall", "canteen"] },
+        { lesson: "3", jp: "じむしょ (事務所)", en: ["office"] },
+        { lesson: "3", jp: "かいぎしつ (会議室)", en: ["conference room", "meeting room"] },
+        { lesson: "3", jp: "うけつけ (受付)", en: ["reception desk", "reception"] },
+        { lesson: "3", jp: "ロビー", en: ["lobby"] },
+        { lesson: "3", jp: "へや (部屋)", en: ["room"] },
+        { lesson: "3", jp: "トイレ (お手洗い)", en: ["toilet", "restroom", "rest room"] },
+        { lesson: "3", jp: "かいだん (階段)", en: ["staircase", "stairs"] },
+        { lesson: "3", jp: "エレベーター", en: ["lift", "elevator"] },
+        { lesson: "3", jp: "エスカレーター", en: ["escalator"] },
+        { lesson: "3", jp: "じどうはんばいき (自動販売機)", en: ["vending machine"] },
+        { lesson: "3", jp: "でんわ (電話)", en: ["telephone handset", "telephone call", "telephone", "phone"] },
+        { lesson: "3", jp: "[お]くに ([お]国)", en: ["country"] },
+        { lesson: "3", jp: "かいしゃ (会社)", en: ["company"] },
+        { lesson: "3", jp: "うち", en: ["house", "home"] },
+        { lesson: "3", jp: "くつ (靴)", en: ["shoes"] },
+        { lesson: "3", jp: "ネクタイ", en: ["necktie", "tie"] },
+        { lesson: "3", jp: "ワイン", en: ["wine"] },
+        { lesson: "3", jp: "たばこ", en: ["tobacco", "cigarette"] },
+        { lesson: "3", jp: "うりば (売り場)", en: ["department", "counter", "sales counter"] },
+        { lesson: "3", jp: "ちか (地下)", en: ["basement"] },
+        { lesson: "3", jp: "〜かい / 〜がい (〜階)", en: ["floor", "-floor"] },
+        { lesson: "3", jp: "なんがい (何階)", en: ["what floor"] },
+        { lesson: "3", jp: "〜えん (〜円)", en: ["yen", "-yen"] },
+        { lesson: "3", jp: "いくら", en: ["how much"] },
+        { lesson: "3", jp: "ひゃく (百)", en: ["hundred"] },
+        { lesson: "3", jp: "せん (千)", en: ["thousand"] },
+        { lesson: "3", jp: "まん (万)", en: ["ten thousand"] },
+        { lesson: "3", jp: "すみません", en: ["excuse me"] },
+        { lesson: "3", jp: "どうぞ", en: ["here you are"] },
+        { lesson: "3", jp: "[どうも] ありがとう ございます", en: ["thank you very much", "thank you"] },
+        { lesson: "3", jp: "いらっしゃいませ", en: ["welcome"] },
+        { lesson: "3", jp: "〜を 見せて ください", en: ["please show me ~", "show me"] },
+        { lesson: "3", jp: "じゃ", en: ["well", "then"] },
+        { lesson: "3", jp: "〜を ください", en: ["please give me ~", "give me"] },
+                // --- LESSON 4 ---
+        { lesson: "4", jp: "おきます (起きます)", en: ["get up", "wake up"] },
+        { lesson: "4", jp: "ねます (寝ます)", en: ["sleep", "go to bed"] },
+        { lesson: "4", jp: "はたらきます (働きます)", en: ["work"] },
+        { lesson: "4", jp: "やすみます (休みます)", en: ["take a rest", "take a holiday", "rest"] },
+        { lesson: "4", jp: "べんきょうします (勉強します)", en: ["study"] },
+        { lesson: "4", jp: "おわります (終わります)", en: ["finish"] },
+        { lesson: "4", jp: "デパート", en: ["department store"] },
+        { lesson: "4", jp: "ぎんこう (銀行)", en: ["bank"] },
+        { lesson: "4", jp: "ゆうびんきょく (郵便局)", en: ["post office"] },
+        { lesson: "4", jp: "としょかん (図書館)", en: ["library"] },
+        { lesson: "4", jp: "びじゅつかん (美術館)", en: ["art museum", "art gallery"] },
+        { lesson: "4", jp: "いま (今)", en: ["now"] },
+        { lesson: "4", jp: "はん (半)", en: ["half"] },
+        { lesson: "4", jp: "なんじ (何時)", en: ["what time"] },
+        { lesson: "4", jp: "なんぷん (何分)", en: ["what minute"] },
+        { lesson: "4", jp: "ごぜん (午前)", en: ["am", "a.m.", "morning"] },
+        { lesson: "4", jp: "ごご (午後)", en: ["pm", "p.m.", "afternoon"] },
+        { lesson: "4", jp: "あさ (朝)", en: ["morning"] },
+        { lesson: "4", jp: "ひる (昼)", en: ["daytime", "noon"] },
+        { lesson: "4", jp: "ばん / よる", en: ["night", "evening"] },
+        { lesson: "4", jp: "おtとい", en: ["the day before yesterday"] },
+        { lesson: "4", jp: "きのう", en: ["yesterday"] },
+        { lesson: "4", jp: "きょう", en: ["today"] },
+        { lesson: "4", jp: "あした", en: ["tomorrow"] },
+        { lesson: "4", jp: "あさって", en: ["the day after tomorrow"] },
+        { lesson: "4", jp: "こんばん (今晩)", en: ["this evening", "tonight"] },
+        { lesson: "4", jp: "ひるやすみ (昼休み)", en: ["lunchtime"] },
+        { lesson: "4", jp: "しけん (試験)", en: ["examination", "test", "exam"] },
+        { lesson: "4", jp: "かいぎ (会議)", en: ["meeting", "conference"] },
+        { lesson: "4", jp: "えいが (映画)", en: ["film", "movie"] },
+        { lesson: "4", jp: "まいあさ (毎朝)", en: ["every morning"] },
+        { lesson: "4", jp: "まいばん (毎晩)", en: ["every night"] },
+        { lesson: "4", jp: "まいにち (毎日)", en: ["every day", "everyday"] },
+        { lesson: "4", jp: "げつようび (月曜日)", en: ["monday"] },
+        { lesson: "4", jp: "かようび (火曜日)", en: ["tuesday"] },
+        { lesson: "4", jp: "すいようび (水曜日)", en: ["wednesday"] },
+        { lesson: "4", jp: "もくようび (木曜日)", en: ["thursday"] },
+        { lesson: "4", jp: "きんようび (金曜日)", en: ["friday"] },
+        { lesson: "4", jp: "どようび (土曜日)", en: ["saturday"] },
+        { lesson: "4", jp: "にちようび (日曜日)", en: ["sunday"] },
+        { lesson: "4", jp: "なんようび (何曜日)", en: ["what day of the week"] },
+        { lesson: "4", jp: "〜から", en: ["from"] },
+        { lesson: "4", jp: "〜まで", en: ["up to", "until", "to"] },
+        { lesson: "4", jp: "たいへんですね", en: ["that's tough, isn't it?", "that's tough"] },
+        { lesson: "4", jp: "ばんごう (番号)", en: ["number"] },
+        { lesson: "4", jp: "そちら", en: ["your place"] },
+                // --- LESSON 5 ---
+        { lesson: "5", jp: "いきます (行きます)", en: ["go"] },
+        { lesson: "5", jp: "きます (来ます)", en: ["come"] },
+        { lesson: "5", jp: "かえります (帰ります)", en: ["go home", "return"] },
+        { lesson: "5", jp: "がっこう (学校)", en: ["school"] },
+        { lesson: "5", jp: "スーパー", en: ["supermarket"] },
+        { lesson: "5", jp: "えき (駅)", en: ["station"] },
+        { lesson: "5", jp: "ひこうき (飛行機)", en: ["aeroplane", "airplane"] },
+        { lesson: "5", jp: "ふね (船)", en: ["ship"] },
+        { lesson: "5", jp: "でんしゃ (電車)", en: ["electric train", "train"] },
+        { lesson: "5", jp: "ちかてつ (地下鉄)", en: ["underground", "subway"] },
+        { lesson: "5", jp: "しんかんせん (新幹線)", en: ["the shinkansen", "bullet train"] },
+        { lesson: "5", jp: "バス", en: ["bus"] },
+        { lesson: "5", jp: "タクシー", en: ["taxi"] },
+        { lesson: "5", jp: "じてんしゃ (自転車)", en: ["bicycle"] },
+        { lesson: "5", jp: "あるいて (歩いて)", en: ["on foot"] },
+        { lesson: "5", jp: "ひと (人)", en: ["person", "people"] },
+        { lesson: "5", jp: "ともだち (友達)", en: ["friend"] },
+        { lesson: "5", jp: "かれ (彼)", en: ["he", "boyfriend", "lover"] },
+        { lesson: "5", jp: "かのじょ (彼女)", en: ["she", "girlfriend", "lover"] },
+        { lesson: "5", jp: "かぞく (家族)", en: ["family"] },
+        { lesson: "5", jp: "ひとり で (一人で)", en: ["alone", "by oneself"] },
+        { lesson: "5", jp: "せんしゅう (先週)", en: ["last week"] },
+        { lesson: "5", jp: "こんしゅう (今週)", en: ["this week"] },
+        { lesson: "5", jp: "らいしゅう (来週)", en: ["next week"] },
+        { lesson: "5", jp: "せんげつ (先月)", en: ["last month"] },
+        { lesson: "5", jp: "こんげつ (今月)", en: ["this month"] },
+        { lesson: "5", jp: "らいげつ (来月)", en: ["next month"] },
+        { lesson: "5", jp: "きょねん (去年)", en: ["last year"] },
+        { lesson: "5", jp: "ことし", en: ["this year"] },
+        { lesson: "5", jp: "らいねん (来年)", en: ["next year"] },
+        { lesson: "5", jp: "〜ねん (〜年)", en: ["-th year", "year"] },
+        { lesson: "5", jp: "なんねん (何年)", en: ["what year"] },
+        { lesson: "5", jp: "〜がつ (〜月)", en: ["-th month of the year", "month"] },
+        { lesson: "5", jp: "なんがつ (何月)", en: ["what month"] },
+        { lesson: "5", jp: "ついたち (1日)", en: ["first day of the month", "1st"] },
+        { lesson: "5", jp: "ふつか (2日)", en: ["second", "two days", "2nd"] },
+        { lesson: "5", jp: "みっか (3日)", en: ["third", "three days", "3rd"] },
+        { lesson: "5", jp: "よっか (4日)", en: ["fourth", "four days", "4th"] },
+        { lesson: "5", jp: "いつか (5日)", en: ["fifth", "five days", "5th"] },
+        { lesson: "5", jp: "むいか (6日)", en: ["sixth", "six days", "6th"] },
+        { lesson: "5", jp: "なのか (7日)", en: ["seventh", "seven days", "7th"] },
+        { lesson: "5", jp: "ようか (8日)", en: ["eighth", "eight days", "8th"] },
+        { lesson: "5", jp: "ここのか (9日)", en: ["ninth", "nine days", "9th"] },
+        { lesson: "5", jp: "とおか (10日)", en: ["tenth", "ten days", "10th"] },
+        { lesson: "5", jp: "じゅうよっか (14日)", en: ["fourteenth", "fourteen days", "14th"] },
+        { lesson: "5", jp: "はつか (20日)", en: ["twentieth", "twenty days", "20th"] },
+        { lesson: "5", jp: "にじゅうよっか (24日)", en: ["twenty-fourth", "twenty-four days", "24th"] },
+        { lesson: "5", jp: "〜にち (〜日)", en: ["-th day of the month", "day"] },
+        { lesson: "5", jp: "なんんにち (何日)", en: ["which day of the month", "how many days", "what day"] },
+        { lesson: "5", jp: "いつ", en: ["when"] },
+        { lesson: "5", jp: "たんじょうび (誕生日)", en: ["birthday"] },
+        { lesson: "5", jp: "そうですね。", en: ["yes, it is", "i agree"] },
+        { lesson: "5", jp: "[どうも] ありがとう ございました。", en: ["thank you very much"] },
+        { lesson: "5", jp: "どう いたしまして。", en: ["you're welcome", "don't mention it", "you are welcome"] },
+        { lesson: "5", jp: "〜ばんせん (〜番線)", en: ["platform", "-th platform"] },
+        { lesson: "5", jp: "つぎの (次の)", en: ["next"] },
+        { lesson: "5", jp: "ふつう (普通)", en: ["local train", "local", "ordinary train"] },
+        { lesson: "5", jp: "きゅうこう (急行)", en: ["rapid"] },
+        { lesson: "5", jp: "とっきゅう (特急)", en: ["express"] },
+
+        // --- LESSON 6 ---
+        { lesson: "6", jp: "たべます (食べます)", en: ["eat"] },
+        { lesson: "6", jp: "みます (見ます)", en: ["see", "look at", "watch"] },
+        { lesson: "6", jp: "ききます (聞きます)", en: ["hear", "listen"] },
+        { lesson: "6", jp: "よみます (読みます)", en: ["read"] },
+        { lesson: "6", jp: "かきます (書きます)", en: ["write", "draw", "paint"] },
+        { lesson: "6", jp: "かいます (買います)", en: ["buy"] },
+        { lesson: "6", jp: "とります (撮ります) [しゃしんを〜]", en: ["take", "take a photograph", "take a photo"] },
+        { lesson: "6", jp: "します", en: ["do", "play"] },
+        { lesson: "6", jp: "あいます (会います) [ともだちに〜]", en: ["meet", "meet a friend"] },
+        { lesson: "6", jp: "ごはん", en: ["a meal", "cooked rice", "meal", "rice"] },
+        { lesson: "6", jp: "あさごはん (朝ごはん)", en: ["breakfast"] },
+        { lesson: "6", jp: "ひるごはん (昼ごはん)", en: ["lunch"] },
+        { lesson: "6", jp: "ばんごはん (晩ごはん)", en: ["supper", "dinner"] },
+        { lesson: "6", jp: "パン", en: ["bread"] },
+        { lesson: "6", jp: "たまご (卵)", en: ["egg"] },
+        { lesson: "6", jp: "にく (肉)", en: ["meat"] },
+        { lesson: "6", jp: "さかな (魚)", en: ["fish"] },
+        { lesson: "6", jp: "やさい (野菜)", en: ["vegetable"] },
+        { lesson: "6", jp: "くだもの (果物)", en: ["fruit"] },
+        { lesson: "6", jp: "みず (水)", en: ["water"] },
+        { lesson: "6", jp: "おちゃ (お茶)", en: ["tea", "green tea"] },
+        { lesson: "6", jp: "こうちゃ (紅茶)", en: ["black tea"] },
+        { lesson: "6", jp: "ぎゅうにゅう (牛乳) / ミルক", en: ["milk"] },
+        { lesson: "6", jp: "ジュース", en: ["juice"] },
+        { lesson: "6", jp: "ビール", en: ["beer"] },
+        { lesson: "6", jp: "[お]さけ ([お]酒)", en: ["alcohol", "japanese rice wine", "sake"] },
+        { lesson: "6", jp: "たばこ", en: ["tobacco", "cigarette"] },
+        { lesson: "6", jp: "てがみ (手紙)", en: ["letter"] },
+        { lesson: "6", jp: "レポート", en: ["report"] },
+        { lesson: "6", jp: "しゃしん (写真)", en: ["photograph", "photo"] },
+        { lesson: "6", jp: "ビデオ", en: ["video", "video tape", "video deck"] },
+        { lesson: "6", jp: "みせ (店)", en: ["shop", "store"] },
+        { lesson: "6", jp: "にわ (庭)", en: ["garden"] },
+        { lesson: "6", jp: "しゅくだい (宿題)", en: ["homework"] },
+        { lesson: "6", jp: "テニス", en: ["tennis"] },
+        { lesson: "6", jp: "サッカー", en: ["soccer", "football"] },
+        { lesson: "6", jp: "[お]はなみ ([お]花見)", en: ["cherry-blossom viewing", "viewing cherry blossoms"] },
+        { lesson: "6", jp: "なに (何)", en: ["what"] },
+        { lesson: "6", jp: "いっしょに", en: ["together"] },
+        { lesson: "6", jp: "ちょっと", en: ["a little while", "a little bit", "a little"] },
+        { lesson: "6", jp: "いつも", en: ["always", "usually"] },
+        { lesson: "6", jp: "ときどき (時々)", en: ["sometimes"] },
+        { lesson: "6", jp: "それから", en: ["after that", "and then"] },
+        { lesson: "6", jp: "ええ", en: ["yes"] },
+        { lesson: "6", jp: "いいね。", en: ["that's good", "that's nice", "sounds good"] },
+        { lesson: "6", jp: "わかりました。", en: ["i see", "understood"] },
+        { lesson: "6", jp: "何ですか。", en: ["yes?", "what is it?"] },
+        { lesson: "6", jp: "じゃ、また [あした]。", en: ["see you [tomorrow]", "see you"] },
+
+        // --- LESSON 7 ---
+        { lesson: "7", jp: "きります (切ります)", en: ["cut", "slice"] },
+        { lesson: "7", jp: "おくります (送ります)", en: ["send"] },
+        { lesson: "7", jp: "あげます", en: ["give"] },
+        { lesson: "7", jp: "もらいます", en: ["receive"] },
+        { lesson: "7", jp: "かします (貸します)", en: ["lend"] },
+        { lesson: "7", jp: "かります (借ります)", en: ["borrow"] },
+        { lesson: "7", jp: "おしえます (教えます)", en: ["teach"] },
+        { lesson: "7", jp: "ならいます (習います)", en: ["learn"] },
+        { lesson: "7", jp: "かけます [でんわを〜] / [電話を〜]", en: ["make", "make a telephone call", "call"] },
+        { lesson: "7", jp: "て (手)", en: ["hand", "arm"] },
+        { lesson: "7", jp: "はし", en: ["chopsticks"] },
+        { lesson: "7", jp: "スプーン", en: ["spoon"] },
+        { lesson: "7", jp: "ナイフ", en: ["knife"] },
+        { lesson: "7", jp: "フォーク", en: ["fork"] },
+        { lesson: "7", jp: "はさみ", en: ["scissors"] },
+        { lesson: "7", jp: "パソコン", en: ["personal computer", "pc"] },
+        { lesson: "7", jp: "ケータイ", en: ["mobile phone", "cell phone", "phone"] },
+        { lesson: "7", jp: "メール", en: ["e-mail", "email"] },
+        { lesson: "7", jp: "ねん가じょう (年賀状)", en: ["new year's greeting card", "new year card"] },
+        { lesson: "7", jp: "パンチ", en: ["punch"] },
+        { lesson: "7", jp: "ホッチキス", en: ["stapler"] },
+        { lesson: "7", jp: "セロテープ", en: ["sellotape", "scotch tape", "clear adhesive tape", "tape"] },
+        { lesson: "7", jp: "けしゴム (消しゴム)", en: ["rubber", "eraser"] },
+        { lesson: "7", jp: "かみ (紙)", en: ["paper"] },
+        { lesson: "7", jp: "はな (花)", en: ["flower", "blossom"] },
+        { lesson: "7", jp: "シャツ", en: ["shirt"] },
+        { lesson: "7", jp: "プレゼント", en: ["present", "gift"] },
+        { lesson: "7", jp: "にもつ (荷物)", en: ["luggage", "baggage", "parcel"] },
+        { lesson: "7", jp: "おかね (お金)", en: ["money"] },
+        { lesson: "7", jp: "きっぷ (切符)", en: ["ticket"] },
+        { lesson: "7", jp: "クリスマス", en: ["christmas"] },
+        { lesson: "7", jp: "ちち (父)", en: ["father", "my father"] },
+        { lesson: "7", jp: "はは (母)", en: ["mother", "my mother"] },
+        { lesson: "7", jp: "おとうさん (お父さん)", en: ["father", "someone else's father"] },
+        { lesson: "7", jp: "おかあさん (お母さん)", en: ["mother", "someone else's mother"] },
+        { lesson: "7", jp: "もう", en: ["already"] },
+        { lesson: "7", jp: "まだ", en: ["not yet"] },
+        { lesson: "7", jp: "これから", en: ["from now on", "soon"] },
+        { lesson: "7", jp: "[〜、] すてきですね。", en: ["what a nice [~]!"] },
+        { lesson: "7", jp: "いらっしゃい。", en: ["how nice of you to come", "welcome"] },
+        { lesson: "7", jp: "どうぞ おあがり ください。", en: ["do come in"] },
+        { lesson: "7", jp: "しつれいします (失礼します)。", en: ["thank you", "may i"] },
+        { lesson: "7", jp: "[〜は] いかがですか。", en: ["won't you have [~]?", "would you like [~]?"] },
+        { lesson: "7", jp: "いただきます。", en: ["thank you", "i receive"] },
+        { lesson: "7", jp: "ごちそうさまでした。", en: ["thank you for the meal"] },
+        // --- LESSON 8 ---
+        { lesson: "8", jp: "ハンサム [な]", en: ["handsome"] },
+        { lesson: "8", jp: "きれい [な]", en: ["beautiful", "clean"] },
+        { lesson: "8", jp: "しずか [な] (静か [な])", en: ["quiet"] },
+        { lesson: "8", jp: "にぎやか [な]", en: ["lively"] },
+        { lesson: "8", jp: "ゆうめい [な] (有名 [な])", en: ["famous"] },
+        { lesson: "8", jp: "しんせつ [な] (親切 [な])", en: ["helpful", "kind", "considerate"] },
+        { lesson: "8", jp: "げんき [な] (元気 [な])", en: ["healthy", "energetic", "cheerful"] },
+        { lesson: "8", jp: "ひま [な] (暇 [な])", en: ["free", "free time"] },
+        { lesson: "8", jp: "べんり [な] (便利 [な])", en: ["convenient"] },
+        { lesson: "8", jp: "すてき [な]", en: ["fine", "nice", "wonderful"] },
+        { lesson: "8", jp: "おおきい (大きい)", en: ["big", "large"] },
+        { lesson: "8", jp: "ちいさい (小さい)", en: ["small", "little"] },
+        { lesson: "8", jp: "あたらしい (新しい)", en: ["new", "fresh"] },
+        { lesson: "8", jp: "ふるい (古い)", en: ["old"] },
+        { lesson: "8", jp: "いい (よい)", en: ["good"] },
+        { lesson: "8", jp: "わるい (悪い)", en: ["bad"] },
+        { lesson: "8", jp: "あつい (暑い、熱い)", en: ["hot"] },
+        { lesson: "8", jp: "さむい (寒い)", en: ["cold"] },
+        { lesson: "8", jp: "つめたい (冷たい)", en: ["cold"] },
+        { lesson: "8", jp: "むずかしい (難しい)", en: ["difficult"] },
+        { lesson: "8", jp: "やさしい (易しい)", en: ["easy"] },
+        { lesson: "8", jp: "たかい (高い)", en: ["expensive", "tall", "high"] },
+        { lesson: "8", jp: "やすい (安い)", en: ["inexpensive", "cheap"] },
+        { lesson: "8", jp: "ひくい (低い)", en: ["low"] },
+        { lesson: "8", jp: "おもしろい", en: ["interesting"] },
+        { lesson: "8", jp: "おいしい", en: ["delicious", "tasty"] },
+        { lesson: "8", jp: "いそがしい (忙しい)", en: ["busy"] },
+        { lesson: "8", jp: "たのしい (楽しい)", en: ["enjoyable"] },
+        { lesson: "8", jp: "しろい (白い)", en: ["white"] },
+        { lesson: "8", jp: "くろい (黒い)", en: ["black"] },
+        { lesson: "8", jp: "あかい (赤い)", en: ["red"] },
+        { lesson: "8", jp: "あおい (青い)", en: ["blue"] },
+        { lesson: "8", jp: "さくら (桜)", en: ["cherry", "cherry blossom"] },
+        { lesson: "8", jp: "やま (山)", en: ["mountain"] },
+        { lesson: "8", jp: "まち (町)", en: ["town", "city"] },
+        { lesson: "8", jp: "たべもの (食べ物)", en: ["food"] },
+        { lesson: "8", jp: "くるま (車)", en: ["car", "vehicle"] },
+        { lesson: "8", jp: "ところ (所)", en: ["place"] },
+        { lesson: "8", jp: "りょう (寮)", en: ["dormitory"] },
+        { lesson: "8", jp: "べんきょう (勉強)", en: ["study"] },
+        { lesson: "8", jp: "せいかつ (生活)", en: ["life"] },
+        { lesson: "8", jp: "[お]しごと ([お]仕事)", en: ["work", "job"] },
+        { lesson: "8", jp: "どう", en: ["how"] },
+        { lesson: "8", jp: "どんな 〜", en: ["what kind of ~", "what kind of"] },
+        { lesson: "8", jp: "どれ", en: ["which one"] },
+        { lesson: "8", jp: "とても", en: ["very"] },
+        { lesson: "8", jp: "あまり", en: ["not so", "not very"] },
+        { lesson: "8", jp: "그리고", en: ["and"] },
+        { lesson: "8", jp: "〜が、〜", en: ["but"] },
+        { lesson: "8", jp: "お元気ですか。", en: ["how are you?"] },
+        { lesson: "8", jp: "そうですね。", en: ["well", "let me see"] },
+        { lesson: "8", jp: "日本の生活に慣れましたか。", en: ["have you got used to the life in japan?"] },
+        { lesson: "8", jp: "[〜、]もう一杯いかがですか。", en: ["won't you have another cup of [~]?"] },
+        { lesson: "8", jp: "いいえ、結構です。", en: ["no, thank you"] },
+        { lesson: "8", jp: "もう〜です[ね]。", en: ["it's already ~ [,isn't it?]"] },
+        { lesson: "8", jp: "そろそろ失礼します。", en: ["it's almost time to leave now"] },
+        { lesson: "8", jp: "またいらっしゃってください。", en: ["please come again"] },
+        // --- LESSON 9 ---
+        { lesson: "9", jp: "わかります", en: ["understand"] },
+        { lesson: "9", jp: "あります", en: ["have", "exist"] },
+        { lesson: "9", jp: "すき [な] (好き [な])", en: ["like"] },
+        { lesson: "9", jp: "きらい [な] (嫌い [な])", en: ["dislike"] },
+        { lesson: "9", jp: "じょうず [な] (上手 [な])", en: ["good at"] },
+        { lesson: "9", jp: "へた [な] (下手 [な])", en: ["poor at"] },
+        { lesson: "9", jp: "のみもの (飲み物)", en: ["drinks", "drink"] },
+        { lesson: "9", jp: "りょうり (料理)", en: ["dish", "cooking", "cuisine"] },
+        { lesson: "9", jp: "スポーツ", en: ["sport", "sports"] },
+        { lesson: "9", jp: "やきゅう (野球)", en: ["baseball"] },
+        { lesson: "9", jp: "ダンス", en: ["dance"] },
+        { lesson: "9", jp: "りょこう (旅行)", en: ["trip", "tour", "travel"] },
+        { lesson: "9", jp: "おんがく (音楽)", en: ["music"] },
+        { lesson: "9", jp: "うた (歌)", en: ["song"] },
+        { lesson: "9", jp: "クラシック", en: ["classical music"] },
+        { lesson: "9", jp: "ジャズ", en: ["jazz"] },
+        { lesson: "9", jp: "コンサート", en: ["concert"] },
+        { lesson: "9", jp: "カラオケ", en: ["karaoke"] },
+        { lesson: "9", jp: "かぶき (歌舞伎)", en: ["kabuki"] },
+        { lesson: "9", jp: "え (絵)", en: ["picture", "drawing"] },
+        { lesson: "9", jp: "じ (字)", en: ["letter", "character"] },
+        { lesson: "9", jp: "かんじ (漢字)", en: ["chinese character", "kanji"] },
+        { lesson: "9", jp: "ひらがな", en: ["hiragana script", "hiragana"] },
+        { lesson: "9", jp: "かたかな", en: ["katakana script", "katakana"] },
+        { lesson: "9", jp: "ローマじ (ローマ字)", en: ["the roman alphabet", "romaji"] },
+        { lesson: "9", jp: "こまかい おかね (細かい お金)", en: ["small change"] },
+        { lesson: "9", jp: "チケット", en: ["ticket"] },
+        { lesson: "9", jp: "じかん (時間)", en: ["time"] },
+        { lesson: "9", jp: "ようじ (用事)", en: ["something to do", "errand"] },
+        { lesson: "9", jp: "やくそく (約束)", en: ["appointment", "promise"] },
+        { lesson: "9", jp: "アルバイト", en: ["side job", "part-time job", "work part-time"] },
+        { lesson: "9", jp: "ごしゅじん (ご主人)", en: ["husband", "someone else's husband"] },
+        { lesson: "9", jp: "おっと / しゅじん (夫 / 主人)", en: ["husband", "my husband"] },
+        { lesson: "9", jp: "おくさん (奥さん)", en: ["wife", "someone else's wife"] },
+        { lesson: "9", jp: "つま / かない (妻 / 家内)", en: ["wife", "my wife"] },
+        { lesson: "9", jp: "こども (子ども)", en: ["child"] },
+        { lesson: "9", jp: "よく", en: ["well", "much"] },
+        { lesson: "9", jp: "だいたい", en: ["mostly", "roughly"] },
+        { lesson: "9", jp: "たくさん", en: ["many", "much"] },
+        { lesson: "9", jp: "すこし (少し)", en: ["a little", "a few"] },
+        { lesson: "9", jp: "ぜんぜん (全然)", en: ["not at all"] },
+        { lesson: "9", jp: "はやく (早く、速く)", en: ["early", "quickly", "fast"] },
+        { lesson: "9", jp: "〜から", en: ["because"] },
+        { lesson: "9", jp: "どうして", en: ["why"] },
+        { lesson: "9", jp: "貸して ください。", en: ["please lend"] },
+        { lesson: "9", jp: "いいですよ。", en: ["sure", "certainly"] },
+        { lesson: "9", jp: "残念です [が]", en: ["i'm sorry", "unfortunately"] },
+        { lesson: "9", jp: "ああ", en: ["oh"] },
+        { lesson: "9", jp: "いっしょに いかがですか。", en: ["won't you join us?", "won't you join me?"] },
+        { lesson: "9", jp: "[〜は] ちょっと……。", en: ["is a bit difficult"] },
+        { lesson: "9", jp: "だめですか。", en: ["so you can't come?"] },
+        { lesson: "9", jp: "また 今度 お願いします。", en: ["please ask me again some other time"] }
+
+    ];
+
+    let activeWords = [];
+    let position = 0;
+    let flawsList = [];
+    let lockInput = false;
+
+    function resetQuizState() {
+        const selectedSelection = document.getElementById("lesson-select").value;
+        if (selectedSelection === "all") {
+            activeWords = [...vocabularyList];
+        } else {
+            activeWords = vocabularyList.filter(item => item.lesson === selectedSelection);
+        }
+        activeWords.sort(() => 0.5 - Math.random());
+        position = 0;
+        flawsList = [];
+        lockInput = false;
+        document.getElementById("box-improve").style.display = "none";
+        document.getElementById("list-wrong-words").innerHTML = "";
+        document.getElementById("msg-feedback").innerText = "";
+        document.getElementById("input-ans").disabled = false;
+        document.getElementById("btn-submit").disabled = false;
+        displayWordElement();
+    }
+
+    function displayWordElement() {
+        if (position < activeWords.length) {
+            document.getElementById("target-word").innerText = activeWords[position].jp;
+            document.getElementById("input-ans").value = "";
+            document.getElementById("msg-feedback").innerText = "";
+            renderProgressLabel();
+            setTimeout(() => { document.getElementById("input-ans").focus(); }, 50);
+        } else {
+            terminateQuizSession();
+        }
+    }
+
+    function renderProgressLabel() {
+        if (activeWords.length > 0) {
+            if (position < activeWords.length) {
+                document.getElementById("msg-progress").innerText = `Word ${position + 1} of ${activeWords.length}`;
+            } else {
+                document.getElementById("msg-progress").innerText = "Quiz Finished!";
+            }
+        }
+    }
+
+    function verifyInput() {
+        if (lockInput) return;
+        const userInput = document.getElementById("input-ans").value.trim().toLowerCase();
+        if (userInput === "") return;
+        lockInput = true;
+        const currentItem = activeWords[position];
+        const matchFound = currentItem.en.map(v => v.toLowerCase()).includes(userInput);
+        const feed = document.getElementById("msg-feedback");
+        if (matchFound) {
+            feed.innerText = "✓ Correct Answer!";
+            feed.className = "feedback correct";
+        } else {
+            feed.innerText = `✗ Wrong! Correct target: ${currentItem.en.join(' or ')}`;
+            feed.className = "feedback incorrect";
+            if (!flawsList.includes(currentItem)) { flawsList.push(currentItem); }
+        }
+        position++;
+        setTimeout(() => { lockInput = false; displayWordElement(); }, 1800);
+    }
+
+       function terminateQuizSession() {
+        document.getElementById("input-ans").disabled = true;
+        document.getElementById("btn-submit").disabled = true;
+        document.getElementById("target-word").innerText = "🎉";
+        renderProgressLabel();
+
+        const box = document.getElementById("box-improve");
+        const ul = document.getElementById("list-wrong-words");
+        box.style.display = "block";
+        ul.innerHTML = "";
+
+        // Check which lesson is currently selected in the dropdown
+        const currentLesson = document.getElementById("lesson-select").value;
+
+        // Base completion message
+        let summaryHtml = `<h4>Quiz Completed for Lesson: ${currentLesson.toUpperCase()}</h4>`;
+        
+        if (flawsList.length === 0) {
+            summaryHtml += '<p style="color:#2ecc71; font-weight:bold; text-align:center; margin:0;">🎉 Perfect Score! No words to improve. Awesome job!</p>';
+        } else {
+            summaryHtml += '<p style="color:#e74c3c; font-weight:bold;">Review these words to improve:</p><ul>';
+            flawsList.forEach(item => {
+                summaryHtml += `<li><strong>${item.jp}</strong> — Meaning: <em>${item.en.join(', ')}</em></li>`;
+            });
+            summaryHtml += '</ul>';
+        }
+
+        // --- DYNAMIC STUDY NOTES BASED ON SELECTED LESSON ---
+        let notesHtml = "<div style='margin-top:20px; padding-top:15px; border-top:1px dashed #ccc; color:#555; font-size:14px; text-align:left;'>";
+        notesHtml += "<b style='color:#2c3e50;'>💡 Teacher's Lesson Note:</b><br>";
+
+        if (currentLesson === "1") {
+            notesHtml += "• Pay attention to the difference between <b>せんせい (Sensei)</b> [used for others] and <b>きょうし (Kyoshi)</b> [used for your own profession].<br>• Country suffixes use <b>〜じん</b> for nationality and <b>〜ご</b> for language.";
+        } else if (currentLesson === "2") {
+            notesHtml += "• Remember the physical distance rules: <b>これ</b> (Near speaker), <b>それ</b> (Near listener), and <b>あれ</b> (Far from both).<br>• Use <b>この/その/あの</b> only when directly followed by a noun (e.g., このほん).";
+        } else if (currentLesson === "3") {
+            notesHtml += "• <b>ここ/そこ/あそこ</b> refer to physical places, while <b>こちら/そちら/あちら</b> are their polite, directional counterparts.<br>• Use <b>いくら</b> to ask for prices and count floors using <b>〜かい / 〜がい</b>.";
+        } else if (currentLesson === "4") {
+            notesHtml += "• Pay close attention to time counters. Hours use <b>〜じ</b> and minutes use <b>〜ふん / 〜ぷん</b>.<br>• Distinguish past and future reference words clearly: <b>きのう</b> (Yesterday) vs <b>あした</b> (Tomorrow).";
+        } else if (currentLesson === "5") {
+            notesHtml += "• <b>CRITICAL CALENDAR RULES:</b> Days 1 to 10 have irregular counts (ついたち, ふつか, みっか...). Memorize these separately!<br>• Also remember the irregular mid-month days: 14th (じゅうよっか), 20th (hatsuka), and 24th (にじゅうよっか).";
+        } else if (currentLesson === "6") {
+            notesHtml += "• Action verbs require the particle <b>を (o)</b> before them (e.g., パンを たべます).<br>• The phrase <b>いっしょに いかがですか</b> is a polite way to invite someone to join an activity.";
+        } else if (currentLesson === "7") {
+            notesHtml += "• This lesson focuses on tools and giving/receiving. Means or tools require the particle <b>で</b> (e.g., はしで たべます).<br>• Pay attention to direction: <b>あげます</b> (To give away) vs <b>もらいます</b> (To receive).";
+        } else if (currentLesson === "8") {
+            notesHtml += "• Japanese adjectives are divided into <b>い-adjectives</b> (ending in shared -i vowels like おおきい) and <b>な-adjectives</b> (like きれい, しずか).<br>• <b>きれい</b> looks like an i-adjective but it is strictly a な-adjective!";
+        } else if (currentLesson === "9") {
+            notesHtml += "• Preferences and abilities use the particle <b>が</b> instead of を (e.g., りょうりが すきです, 漢字が わかります).<br>• Use <b>どうして</b> to ask 'Why' and answer the sentence using the suffix <b>〜から</b> (because).";
+        } else if (currentLesson === "10") {
+            notesHtml += "• Existence verbs depend strictly on animacy: <b>あります</b> is for non-living objects/plants, while <b>います</b> is for living humans/animals.<br>• Position words follow the pattern: [Noun] の [うえ/した/なか/まえ/うしろ].";
+        } else {
+            notesHtml += "• Great job practicing multiple lessons! Keep reviewing the mixed target parameters to strengthen your vocabulary recall agility.";
+        }
+        
+        notesHtml += "</div>";
+
+        // Inject combined summary and custom notes into the UI block
+        ul.innerHTML = summaryHtml + notesHtml;
+    }
+
+    document.getElementById("input-ans").addEventListener("keyup", function(e) {
+        if (e.key === "Enter") { verifyInput(); }
+    });
+
+    resetQuizState();
+</script>
+</body>
+</html>
